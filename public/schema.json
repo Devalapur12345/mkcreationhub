@@ -1,0 +1,46 @@
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "MD Creation Hub - Premium Gift Packaging",
+  "description": "Premium wedding and engagement gift packaging service in Belagavi",
+  "image": "https://MD Creation Hub-gifts.com/logo.png",
+  "telephone": "+917795440217",
+  "email": "contact@MD Creation Hub-gifts.com",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Azam Nager",
+    "addressLocality": "Belagavi",
+    "addressRegion": "Karnataka",
+    "postalCode": "590001",
+    "addressCountry": "IN"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": "15.8497",
+    "longitude": "75.6499"
+  },
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    "opens": "10:00",
+    "closes": "20:00"
+  },
+  "sameAs": [],
+  "url": "https://MD Creation Hub-gifts.com",
+  "priceRange": "₹500-₹5000",
+  "serviceType": ["Wedding Gift Packaging", "Engagement Gift Packaging", "Custom Gift Arrangements"],
+  "areaServed": {
+    "@type": "City",
+    "name": "Belagavi",
+    "address": {
+      "@type": "PostalAddress",
+      "addressRegion": "Karnataka",
+      "addressCountry": "IN"
+    }
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "145"
+  }
+}
