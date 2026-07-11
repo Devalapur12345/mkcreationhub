@@ -2,13 +2,13 @@ import Image from 'next/image'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'About MD Creation Hub | Premium Gift Packaging in Belagavi',
-  description: 'Learn about MD Creation Hub - Your trusted source for premium wedding and engagement gift packaging in Belagavi. Over 5 years of excellence in custom gift arrangements.',
+  title: 'About MK Creation Hub | Premium Gift Packaging in Belagavi',
+  description: 'Learn about MK Creation Hub - Your trusted source for premium wedding and engagement gift packaging in Belagavi. Over 5 years of excellence in custom gift arrangements.',
   keywords: ['about us', 'gift packaging', 'wedding arrangements', 'Belagavi', 'premium gifts'],
   openGraph: {
-    title: 'About MD Creation Hub - Premium Wedding & Engagement Gift Packaging',
+    title: 'About MK Creation Hub - Premium Wedding & Engagement Gift Packaging',
     description: 'Crafting beautiful moments through premium gift packaging since day one',
-    url: 'https://MD Creation Hub-gifts.com/about',
+    url: 'https://MK Creation Hub-gifts.com/about',
   },
 }
 
@@ -33,7 +33,7 @@ export default function About() {
               <h2 className="text-4xl font-serif font-bold text-foreground mb-6">Our Story</h2>
               <div className="space-y-4 text-lg text-muted-foreground">
                 <p>
-                  At MD Creation Hub, we believe that every celebration deserves something special. Our journey began with a simple vision: to create beautiful, memorable gift arrangements that capture the essence of love and celebration.
+                  At MK Creation Hub, we believe that every celebration deserves something special. Our journey began with a simple vision: to create beautiful, memorable gift arrangements that capture the essence of love and celebration.
                 </p>
                 <p>
                   With years of experience in the art of gift packaging and decoration, we have perfected the craft of transforming simple items into extraordinary expressions of care and affection. Each arrangement tells a story, carefully curated with premium flowers, luxurious chocolates, and thoughtful design.

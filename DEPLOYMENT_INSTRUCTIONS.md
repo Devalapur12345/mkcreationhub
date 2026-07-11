@@ -1,4 +1,4 @@
-# MD Creation Hub Website - Deployment & Google Search Setup
+# MK Creation Hub Website - Deployment & Google Search Setup
 
 ## Quick Start for Google Search Visibility
 
@@ -15,13 +15,13 @@ vercel deploy
 3. Vercel will automatically deploy on each push
 ```
 
-After deployment, note your live domain (e.g., `MD Creation Hub-gifts.vercel.app` or custom domain)
+After deployment, note your live domain (e.g., `MK Creation Hub-gifts.vercel.app` or custom domain)
 
 ### Step 2: Update Domain URLs
 Once you have your live domain:
 
 1. Open `/app/layout.tsx`
-2. Replace `https://MD Creation Hub-gifts.com` with your actual domain in:
+2. Replace `https://MK Creation Hub-gifts.com` with your actual domain in:
    - OpenGraph URL
    - Metadata
 
@@ -30,7 +30,7 @@ Once you have your live domain:
 ### Step 3: Add Custom Domain (Optional but Recommended)
 For better branding and SEO:
 1. Go to Vercel Project Settings
-2. Add your custom domain (e.g., MD Creation Hub-gifts.in)
+2. Add your custom domain (e.g., MK Creation Hub-gifts.in)
 3. Update all URLs to use custom domain
 
 ### Step 4: Google Search Console Setup
@@ -55,7 +55,7 @@ For better branding and SEO:
 1. Go to https://www.google.com/business
 2. "Manage your business"
 3. Enter business info:
-   - Name: MD Creation Hub
+   - Name: MK Creation Hub
    - Phone: +91 7795440217
    - Address: Azam Nager, Belagavi, Karnataka
    - Website: Your domain
@@ -84,7 +84,7 @@ Add your business to:
 - Yellow Pages
 
 **Consistency is KEY:** Use exact same:
-- Business name: MD Creation Hub
+- Business name: MK Creation Hub
 - Phone: +91 7795440217
 - Address: Azam Nager, Belagavi, Karnataka
 

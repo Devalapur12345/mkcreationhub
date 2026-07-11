@@ -8,12 +8,12 @@ const whatsappHref = 'https://wa.me/917795440217'
 export const metadata: Metadata = {
   title: 'Contact | Premium Gift Packaging in Belagavi - +91 7795440217',
   description:
-    'Call MD Creation Hub for custom wedding and engagement gift arrangements in Belagavi. Premium gift packaging, floral decorations, and luxury arrangements.',
+    'Call MK Creation Hub for custom wedding and engagement gift arrangements in Belagavi. Premium gift packaging, floral decorations, and luxury arrangements.',
   keywords: ['contact us', 'gift order', 'wedding gifts', 'engagement gifts', 'Belagavi contact', 'order gifts'],
   openGraph: {
-    title: 'Contact MD Creation Hub - Call for Gift Orders',
+    title: 'Contact MK Creation Hub - Call for Gift Orders',
     description: 'Call or WhatsApp us for custom gift arrangements in Belagavi.',
-    url: 'https://MD Creation Hub-gifts.com/contact',
+    url: 'https://MK Creation Hub-gifts.com/contact',
   },
 }
 

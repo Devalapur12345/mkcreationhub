@@ -5,7 +5,7 @@ import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'MD Creation Hub - Premium Wedding & Engagement Gift Packaging | Belagavi',
+  title: 'MK Creation Hub - Premium Wedding & Engagement Gift Packaging | Belagavi',
   description: 'Premium wedding and engagement gift packaging in Belagavi. Beautifully crafted arrangements with flowers, chocolates, and luxury decorations. Call +91 7795440217',
   keywords: ['wedding gifts', 'engagement gifts', 'gift packaging', 'Belagavi', 'wedding arrangements', 'luxury gifts', 'gift decoration'],
   generator: 'v0.app',
@@ -15,17 +15,17 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: 'https://MD Creation Hub-gifts.com',
-    title: 'MD Creation Hub - Premium Wedding & Engagement Gift Packaging',
+    url: 'https://MK Creation Hub-gifts.com',
+    title: 'MK Creation Hub - Premium Wedding & Engagement Gift Packaging',
     description: 'Beautifully crafted wedding and engagement gift arrangements in Belagavi',
-    siteName: 'MD Creation Hub',
+    siteName: 'MK Creation Hub',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MD Creation Hub - Premium Wedding & Engagement Gift Packaging',
+    title: 'MK Creation Hub - Premium Wedding & Engagement Gift Packaging',
     description: 'Beautifully crafted wedding and engagement gift arrangements',
   },
-  authors: [{ name: 'MD Creation Hub' }],
+  authors: [{ name: 'MK Creation Hub' }],
   robots: {
     index: true,
     follow: true,
@@ -55,10 +55,10 @@ export default function RootLayout({
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    name: 'MD Creation Hub - Premium Gift Packaging',
+    name: 'MK Creation Hub - Premium Gift Packaging',
     description: 'Premium wedding and engagement gift packaging service in Belagavi',
     telephone: '+917795440217',
-    email: 'contact@MD Creation Hub-gifts.com',
+    email: 'contact@MK Creation Hub-gifts.com',
     address: {
       '@type': 'PostalAddress',
       streetAddress: 'Azam Nager',
@@ -73,7 +73,7 @@ export default function RootLayout({
       opens: '10:00',
       closes: '20:00',
     },
-    url: 'https://MD Creation Hub-gifts.com',
+    url: 'https://MK Creation Hub-gifts.com',
   }
 
   return (

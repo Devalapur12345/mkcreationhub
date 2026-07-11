@@ -1,11 +1,11 @@
 {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
-  "name": "MD Creation Hub - Premium Gift Packaging",
+  "name": "MK Creation Hub - Premium Gift Packaging",
   "description": "Premium wedding and engagement gift packaging service in Belagavi",
-  "image": "https://MD Creation Hub-gifts.com/logo.png",
+  "image": "https://MK Creation Hub-gifts.com/logo.png",
   "telephone": "+917795440217",
-  "email": "contact@MD Creation Hub-gifts.com",
+  "email": "contact@MK Creation Hub-gifts.com",
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Azam Nager",
@@ -26,7 +26,7 @@
     "closes": "20:00"
   },
   "sameAs": [],
-  "url": "https://MD Creation Hub-gifts.com",
+  "url": "https://MK Creation Hub-gifts.com",
   "priceRange": "₹500-₹5000",
   "serviceType": ["Wedding Gift Packaging", "Engagement Gift Packaging", "Custom Gift Arrangements"],
   "areaServed": {

@@ -1,4 +1,4 @@
-# MD Creation Hub Website - SEO Optimization Guide
+# MK Creation Hub Website - SEO Optimization Guide
 
 ## Search Engine Visibility Improvements
 
@@ -137,5 +137,5 @@ When deploying to Vercel:
 ---
 
 **Last Updated:** July 7, 2026
-**Website:** MD Creation Hub - Premium Gift Packaging
+**Website:** MK Creation Hub - Premium Gift Packaging
 **Location:** Belagavi, Karnataka

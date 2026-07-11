@@ -2,13 +2,13 @@ import { Metadata } from 'next'
 import GalleryClient from '@/components/GalleryClient'
 
 export const metadata: Metadata = {
-  title: 'Gallery | MD Creation Hub Premium Gift Arrangements in Belagavi',
+  title: 'Gallery | MK Creation Hub Premium Gift Arrangements in Belagavi',
   description: 'Browse our stunning collection of wedding and engagement gift arrangements. Custom designed luxury packages with fresh flowers, chocolates, and premium decorations.',
   keywords: ['gift gallery', 'wedding gifts', 'engagement gifts', 'gift arrangements', 'Belagavi', 'custom packages'],
   openGraph: {
-    title: 'MD Creation Hub Gallery - Premium Gift Arrangements',
+    title: 'MK Creation Hub Gallery - Premium Gift Arrangements',
     description: 'Stunning collection of custom-designed wedding and engagement gift packages',
-    url: 'https://MD Creation Hub-gifts.com/gallery',
+    url: 'https://MK Creation Hub-gifts.com/gallery',
   },
 }
 

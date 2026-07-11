@@ -28,8 +28,8 @@ export const galleryFilters = [
   },
 ]
 
-export const galleryStorageKey = 'MD Creation Hub-gallery-images'
-export const adminSessionKey = 'MD Creation Hub-admin-logged-in'
+export const galleryStorageKey = 'MK Creation Hub-gallery-images'
+export const adminSessionKey = 'MK Creation Hub-admin-logged-in'
 
 export const defaultImages: GalleryImage[] = [
   {

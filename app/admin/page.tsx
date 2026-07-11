@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import AdminGalleryManager from '@/components/AdminGalleryManager'
 
 export const metadata: Metadata = {
-  title: 'Admin | MD Creation Hub Gallery',
+  title: 'Admin | MK Creation Hub Gallery',
   robots: {
     index: false,
     follow: false,

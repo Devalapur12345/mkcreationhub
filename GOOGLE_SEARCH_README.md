@@ -1,8 +1,8 @@
-# MD Creation Hub Website - Google Search Optimization
+# MK Creation Hub Website - Google Search Optimization
 
 ## Your Website is Now Google Search Ready!
 
-I've fully optimized your MD Creation Hub gift packaging website for Google search visibility. Here's everything that was done:
+I've fully optimized your MK Creation Hub gift packaging website for Google search visibility. Here's everything that was done:
 
 ---
 
@@ -134,7 +134,7 @@ Documentation/
 When someone searches on Google:
 - "wedding gifts in Belagavi" → Your website will appear
 - "engagement gift ideas" → Your website will appear
-- "MD Creation Hub gifts" → Your website will rank #1
+- "MK Creation Hub gifts" → Your website will rank #1
 
 ---
 
@@ -248,7 +248,7 @@ That's it! The rest is automatic. Google will crawl your website regularly and s
 
 ---
 
-*Website: MD Creation Hub - Premium Wedding & Engagement Gift Packaging*
+*Website: MK Creation Hub - Premium Wedding & Engagement Gift Packaging*
 *Location: Belagavi, Karnataka*
 *Phone: +91 7795440217*
 *Last Updated: July 7, 2026*
