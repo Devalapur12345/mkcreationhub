@@ -9,9 +9,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
           <div>
-            <div className="relative w-42 h-42 mb-4">
+            <div className="relative w-90 h-90 mb-4">
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MK%20Creations%20Hub-02-Hv6pLWZCLMIWfihCLFF6SbCtTTpbgk.png"
+                src="/Logo_white.svg"
                 alt="MK Creations Hub"
                 fill
                 className="object-contain"

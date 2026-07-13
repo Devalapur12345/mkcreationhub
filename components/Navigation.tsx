@@ -23,10 +23,10 @@ export default function Navigation() {
           {/* Logo */}
           <Link
             href="/"
-            className="relative w-42 h-42 flex items-center flex-shrink-0 z-10"
+            className="relative w-90 h-90 flex items-center flex-shrink-0 z-10"
           >
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/MK%20Creations%20Hub-02-3pnOBpheA3nC9wnv2UUTzcfRta0UlI.png"
+              src="/Logo_white.svg"
               alt="MK Creations Hub"
               fill
               className="object-contain"

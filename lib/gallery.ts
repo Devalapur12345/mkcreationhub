@@ -1,4 +1,4 @@
-export type GalleryCategory = 'floral' | 'luxury' | 'gifts'
+export type GalleryCategory = 'floral' | 'luxury' | 'gifts' | 'sweets'
 
 export type GalleryImage = {
   id: string
@@ -26,12 +26,30 @@ export const galleryFilters = [
     category: 'Gifts',
     id: 'gifts',
   },
+  {
+    category: 'Sweets',
+    id: 'sweets',
+  },
 ]
 
 export const galleryStorageKey = 'MK Creation Hub-gallery-images'
 export const adminSessionKey = 'MK Creation Hub-admin-logged-in'
 
 export const defaultImages: GalleryImage[] = [
+  {
+    id: 'jarda-decoration',
+    src: '/gallery/jarda-decoration.png',
+    alt: 'Tiered Jarda sweet decoration',
+    category: 'sweets',
+    title: 'Jarda Decoration',
+  },
+  {
+    id: 'jarda-decoration-with-flowers',
+    src: '/gallery/jarda-decoration-with-flowers.png',
+    alt: 'Jarda sweet decoration with flowers',
+    category: 'sweets',
+    title: 'Jarda Decoration with Flowers',
+  },
   {
     id: 'chocolate-tower',
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-UMsIbcL4YX91sw0OyZ6tspfBzdTr47.png',

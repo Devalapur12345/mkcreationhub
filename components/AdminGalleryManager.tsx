@@ -10,8 +10,8 @@ import {
   type GalleryImage,
 } from '@/lib/gallery'
 
-const adminUsername = 'mdcreation1234'
-const adminPassword = 'mdcreation@12345'
+const adminUsername = 'Kair2528'
+const adminPassword = 'Kabir@28'
 const maxFileSize = 2 * 1024 * 1024
 
 function readUploadedImages() {
