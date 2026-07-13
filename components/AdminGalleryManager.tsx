@@ -10,7 +10,7 @@ import {
   type GalleryImage,
 } from '@/lib/gallery'
 
-const adminUsername = 'Kair2528'
+const adminUsername = 'Kabir2528'
 const adminPassword = 'Kabir@28'
 const maxFileSize = 2 * 1024 * 1024
 
