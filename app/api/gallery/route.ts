@@ -40,13 +40,21 @@ async function saveImages(images: GalleryImage[]) {
   await writeFile(manifestPath, JSON.stringify(images, null, 2), 'utf8')
 }
 
+function jsonResponse(body: unknown, init?: ResponseInit) {
+  const response = NextResponse.json(body, init)
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+  response.headers.set('Pragma', 'no-cache')
+  response.headers.set('Expires', '0')
+  return response
+}
+
 function jsonError(message: string, status = 400) {
-  return NextResponse.json({ message }, { status })
+  return jsonResponse({ message }, { status })
 }
 
 export async function GET() {
   const images = await readImages()
-  return NextResponse.json({ images })
+  return jsonResponse({ images })
 }
 
 export async function POST(request: NextRequest) {
@@ -103,7 +111,7 @@ export async function POST(request: NextRequest) {
   const nextImages = [uploadedImage, ...images]
   await saveImages(nextImages)
 
-  return NextResponse.json({ image: uploadedImage, images: nextImages }, { status: 201 })
+  return jsonResponse({ image: uploadedImage, images: nextImages }, { status: 201 })
 }
 
 export async function DELETE(request: NextRequest) {
@@ -135,5 +143,5 @@ export async function DELETE(request: NextRequest) {
 
   await saveImages(nextImages)
 
-  return NextResponse.json({ images: nextImages })
+  return jsonResponse({ images: nextImages })
 }

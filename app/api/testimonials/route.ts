@@ -38,13 +38,21 @@ async function saveVideos(videos: TestimonialVideo[]) {
   await writeFile(manifestPath, JSON.stringify(videos, null, 2), 'utf8')
 }
 
+function jsonResponse(body: unknown, init?: ResponseInit) {
+  const response = NextResponse.json(body, init)
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+  response.headers.set('Pragma', 'no-cache')
+  response.headers.set('Expires', '0')
+  return response
+}
+
 function jsonError(message: string, status = 400) {
-  return NextResponse.json({ message }, { status })
+  return jsonResponse({ message }, { status })
 }
 
 export async function GET() {
   const videos = await readVideos()
-  return NextResponse.json({ videos })
+  return jsonResponse({ videos })
 }
 
 export async function POST(request: NextRequest) {
@@ -95,7 +103,7 @@ export async function POST(request: NextRequest) {
   const nextVideos = [uploadedVideo, ...videos]
   await saveVideos(nextVideos)
 
-  return NextResponse.json({ video: uploadedVideo, videos: nextVideos }, { status: 201 })
+  return jsonResponse({ video: uploadedVideo, videos: nextVideos }, { status: 201 })
 }
 
 export async function DELETE(request: NextRequest) {
@@ -127,5 +135,5 @@ export async function DELETE(request: NextRequest) {
 
   await saveVideos(nextVideos)
 
-  return NextResponse.json({ videos: nextVideos })
+  return jsonResponse({ videos: nextVideos })
 }

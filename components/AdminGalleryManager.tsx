@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { ImagePlus, LogOut, Trash2, Video } from 'lucide-react'
 import {
+  galleryStorageKey,
   galleryFilters,
   type GalleryCategory,
   type GalleryImage,
@@ -11,6 +12,28 @@ import type { TestimonialVideo } from '@/lib/testimonials'
 
 const maxFileSize = 2 * 1024 * 1024
 const maxVideoFileSize = 50 * 1024 * 1024
+
+function readLegacyLocalImages() {
+  try {
+    const storedImages = window.localStorage.getItem(galleryStorageKey)
+    return storedImages ? (JSON.parse(storedImages) as GalleryImage[]) : []
+  } catch {
+    return []
+  }
+}
+
+function dataUrlToFile(dataUrl: string, fileName: string) {
+  const [meta, data] = dataUrl.split(',')
+  const mime = meta.match(/data:(.*?);base64/)?.[1] || 'image/jpeg'
+  const binary = window.atob(data)
+  const bytes = new Uint8Array(binary.length)
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index)
+  }
+
+  return new File([bytes], fileName, { type: mime })
+}
 
 export default function AdminGalleryManager() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -57,7 +80,40 @@ export default function AdminGalleryManager() {
       try {
         const response = await fetch('/api/gallery', { cache: 'no-store' })
         const data = (await response.json()) as { images?: GalleryImage[] }
-        setImages(data.images ?? [])
+        let nextImages = data.images ?? []
+        const legacyImages = readLegacyLocalImages().filter((image) => image.src.startsWith('data:image/'))
+
+        if (legacyImages.length > 0) {
+          setMessage('Moving old browser-only images to live gallery...')
+
+          for (const legacyImage of legacyImages) {
+            const formData = new FormData()
+            const fileExtension = legacyImage.src.includes('image/png')
+              ? 'png'
+              : legacyImage.src.includes('image/webp')
+                ? 'webp'
+                : 'jpg'
+
+            formData.append('title', legacyImage.title)
+            formData.append('category', legacyImage.category)
+            formData.append('image', dataUrlToFile(legacyImage.src, `${legacyImage.id}.${fileExtension}`))
+
+            const migrateResponse = await fetch('/api/gallery', {
+              method: 'POST',
+              body: formData,
+            })
+            const migrateData = (await migrateResponse.json()) as { images?: GalleryImage[] }
+
+            if (migrateResponse.ok) {
+              nextImages = migrateData.images ?? nextImages
+            }
+          }
+
+          window.localStorage.removeItem(galleryStorageKey)
+          setMessage('Old browser-only images moved to live gallery.')
+        }
+
+        setImages(nextImages)
       } catch {
         setMessage('Could not load uploaded images.')
       }
