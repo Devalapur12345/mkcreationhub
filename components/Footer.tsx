@@ -69,3 +69,7 @@ export default function Footer() {
     </footer>
   )
 }
+
+
+
+// vercel_blob_rw_62ri6se4nX7rcytY_q70BPSEqfQElnIzpCef8aw5OLu5mrz

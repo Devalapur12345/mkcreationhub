@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { defaultImages, galleryFilters, type GalleryImage } from '@/lib/gallery'
 
 export default function GalleryClient() {
@@ -9,6 +9,14 @@ export default function GalleryClient() {
   const [customImages, setCustomImages] = useState<GalleryImage[]>([])
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null)
   const [zoomLevel, setZoomLevel] = useState(1)
+  const categoryScrollRef = useRef<HTMLDivElement | null>(null)
+
+  const scrollCategory = (direction: 'left' | 'right') => {
+    const container = categoryScrollRef.current
+    if (!container) return
+    const scrollAmount = container.clientWidth * 0.75
+    container.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' })
+  }
 
   useEffect(() => {
     const loadCustomImages = async () => {
@@ -64,20 +72,43 @@ export default function GalleryClient() {
     <>
       <section className="py-12 border-b border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center gap-4 flex-wrap">
-            {galleryFilters.map((gallery) => (
-              <button
-                key={gallery.id}
-                onClick={() => setActiveCategory(gallery.id)}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                  activeCategory === gallery.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-foreground hover:bg-secondary/80'
-                }`}
-              >
-                {gallery.category}
-              </button>
-            ))}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => scrollCategory('left')}
+              className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg shadow-black/10 transition hover:bg-secondary sm:hidden"
+              aria-label="Scroll categories left"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+
+            <div
+              ref={categoryScrollRef}
+              className="flex gap-4 overflow-x-auto px-12 py-4 scroll-smooth no-scrollbar"
+            >
+              {galleryFilters.map((gallery) => (
+                <button
+                  key={gallery.id}
+                  onClick={() => setActiveCategory(gallery.id)}
+                  className={`min-w-max whitespace-nowrap rounded-full px-5 py-3 text-sm font-medium transition-all ${
+                    activeCategory === gallery.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-secondary text-foreground hover:bg-secondary/80'
+                  }`}
+                >
+                  {gallery.category}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => scrollCategory('right')}
+              className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg shadow-black/10 transition hover:bg-secondary sm:hidden"
+              aria-label="Scroll categories right"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </section>

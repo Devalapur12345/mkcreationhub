@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto'
-import { mkdir, readFile, unlink, writeFile } from 'fs/promises'
+import { mkdir, readFile, writeFile } from 'fs/promises'
 import path from 'path'
+import { get, put, del } from '@vercel/blob'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-auth'
 import type { GalleryCategory, GalleryImage } from '@/lib/gallery'
@@ -10,6 +11,7 @@ export const dynamic = 'force-dynamic'
 
 const uploadsDir = path.join(process.cwd(), 'public', 'gallery', 'uploads')
 const manifestPath = path.join(uploadsDir, 'images.json')
+const isVercel = process.env.VERCEL === '1' || Boolean(process.env.VERCEL_URL)
 const maxFileSize = 2 * 1024 * 1024
 
 const allowedTypes = new Map([
@@ -21,10 +23,26 @@ const allowedTypes = new Map([
 const allowedCategories: GalleryCategory[] = ['floral', 'luxury', 'gifts', 'sweets']
 
 async function ensureUploadsDir() {
-  await mkdir(uploadsDir, { recursive: true })
+  if (!isVercel) {
+    await mkdir(uploadsDir, { recursive: true })
+  }
 }
 
 async function readImages() {
+  if (isVercel) {
+    try {
+      const blob = await get('gallery/images.json', { access: 'private' })
+      if (!blob) {
+        return []
+      }
+
+      const text = await new Response(blob.stream).text()
+      return JSON.parse(text) as GalleryImage[]
+    } catch {
+      return []
+    }
+  }
+
   await ensureUploadsDir()
 
   try {
@@ -36,6 +54,15 @@ async function readImages() {
 }
 
 async function saveImages(images: GalleryImage[]) {
+  if (isVercel) {
+    await put('gallery/images.json', JSON.stringify(images, null, 2), {
+      access: 'private',
+      contentType: 'application/json',
+      allowOverwrite: true,
+    })
+    return
+  }
+
   await ensureUploadsDir()
   await writeFile(manifestPath, JSON.stringify(images, null, 2), 'utf8')
 }
@@ -92,11 +119,20 @@ export async function POST(request: NextRequest) {
   const imageTitle = String(titleValue || '').trim() || 'Gallery Image'
   const imageId = `custom-${Date.now()}-${randomUUID()}`
   const fileName = `${imageId}.${extension}`
-  const publicSrc = `/gallery/uploads/${fileName}`
   const bytes = Buffer.from(await file.arrayBuffer())
 
-  await ensureUploadsDir()
-  await writeFile(path.join(uploadsDir, fileName), bytes)
+  let publicSrc = `/gallery/uploads/${fileName}`
+
+  if (isVercel) {
+    const blob = await put(`gallery/${fileName}`, bytes, {
+      access: 'public',
+      contentType: file.type,
+    })
+    publicSrc = blob.url
+  } else {
+    await ensureUploadsDir()
+    await writeFile(path.join(uploadsDir, fileName), bytes)
+  }
 
   const uploadedImage: GalleryImage = {
     id: imageId,
@@ -135,7 +171,17 @@ export async function DELETE(request: NextRequest) {
     const fileName = path.basename(imageToDelete.src)
 
     try {
-      await unlink(path.join(uploadsDir, fileName))
+      if (!isVercel) {
+        await import('fs/promises').then(({ unlink }) => unlink(path.join(uploadsDir, fileName)))
+      }
+    } catch {
+      // The gallery index should still be cleaned up if the file is already gone.
+    }
+  }
+
+  if (isVercel && imageToDelete?.src.startsWith('https://')) {
+    try {
+      await del(imageToDelete.src)
     } catch {
       // The gallery index should still be cleaned up if the file is already gone.
     }

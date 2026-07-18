@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto'
 import { mkdir, readFile, unlink, writeFile } from 'fs/promises'
 import path from 'path'
+import { get, put, del } from '@vercel/blob'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-auth'
 import type { TestimonialVideo } from '@/lib/testimonials'
@@ -10,6 +11,7 @@ export const dynamic = 'force-dynamic'
 
 const uploadsDir = path.join(process.cwd(), 'public', 'testimonials', 'uploads')
 const manifestPath = path.join(uploadsDir, 'videos.json')
+const isVercel = process.env.VERCEL === '1' || Boolean(process.env.VERCEL_URL)
 const maxFileSize = 50 * 1024 * 1024
 
 const allowedTypes = new Map([
@@ -19,10 +21,26 @@ const allowedTypes = new Map([
 ])
 
 async function ensureUploadsDir() {
-  await mkdir(uploadsDir, { recursive: true })
+  if (!isVercel) {
+    await mkdir(uploadsDir, { recursive: true })
+  }
 }
 
 async function readVideos() {
+  if (isVercel) {
+    try {
+      const blob = await get('testimonials/videos.json', { access: 'private' })
+      if (!blob) {
+        return []
+      }
+
+      const text = await new Response(blob.stream).text()
+      return JSON.parse(text) as TestimonialVideo[]
+    } catch {
+      return []
+    }
+  }
+
   await ensureUploadsDir()
 
   try {
@@ -34,6 +52,15 @@ async function readVideos() {
 }
 
 async function saveVideos(videos: TestimonialVideo[]) {
+  if (isVercel) {
+    await put('testimonials/videos.json', JSON.stringify(videos, null, 2), {
+      access: 'private',
+      contentType: 'application/json',
+      allowOverwrite: true,
+    })
+    return
+  }
+
   await ensureUploadsDir()
   await writeFile(manifestPath, JSON.stringify(videos, null, 2), 'utf8')
 }
@@ -56,7 +83,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin()
+  const authError = await requireAdmin(request)
 
   if (authError) {
     return authError
@@ -85,11 +112,20 @@ export async function POST(request: NextRequest) {
   const videoDescription = String(descriptionValue || '').trim()
   const videoId = `testimonial-${Date.now()}-${randomUUID()}`
   const fileName = `${videoId}.${extension}`
-  const publicSrc = `/testimonials/uploads/${fileName}`
   const bytes = Buffer.from(await file.arrayBuffer())
 
-  await ensureUploadsDir()
-  await writeFile(path.join(uploadsDir, fileName), bytes)
+  let publicSrc = `/testimonials/uploads/${fileName}`
+
+  if (isVercel) {
+    const blob = await put(`testimonials/${fileName}`, bytes, {
+      access: 'public',
+      contentType: file.type,
+    })
+    publicSrc = blob.url
+  } else {
+    await ensureUploadsDir()
+    await writeFile(path.join(uploadsDir, fileName), bytes)
+  }
 
   const uploadedVideo: TestimonialVideo = {
     id: videoId,
@@ -107,7 +143,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const authError = await requireAdmin()
+  const authError = await requireAdmin(request)
 
   if (authError) {
     return authError
@@ -127,7 +163,17 @@ export async function DELETE(request: NextRequest) {
     const fileName = path.basename(videoToDelete.src)
 
     try {
-      await unlink(path.join(uploadsDir, fileName))
+      if (!isVercel) {
+        await unlink(path.join(uploadsDir, fileName))
+      }
+    } catch {
+      // Keep the manifest correct even if the video file was already removed.
+    }
+  }
+
+  if (isVercel && videoToDelete?.src.startsWith('https://')) {
+    try {
+      await del(videoToDelete.src)
     } catch {
       // Keep the manifest correct even if the video file was already removed.
     }
