@@ -23,6 +23,7 @@ export type GalleryImage = {
   category: GalleryCategory
   title: string
   isCustom?: boolean
+  blobPath?: string
 }
 
 export const galleryFilters = [

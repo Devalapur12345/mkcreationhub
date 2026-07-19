@@ -31,7 +31,7 @@ async function ensureUploadsDir() {
 async function readImages() {
   if (isVercel) {
     try {
-      const blob = await get('gallery/images.json', { access: 'private' })
+      const blob = await get('gallery/images.json', { access: 'private', useCache: false })
       if (!blob) {
         return []
       }
@@ -79,75 +79,103 @@ function jsonError(message: string, status = 400) {
   return jsonResponse({ message }, { status })
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown server error'
+}
+
+function getImageBlobPath(image: GalleryImage) {
+  if (image.blobPath) {
+    return image.blobPath
+  }
+
+  if (image.src.startsWith('/api/gallery/images/')) {
+    const fileName = image.src.split('/').pop()
+    return fileName ? `gallery/${decodeURIComponent(fileName)}` : null
+  }
+
+  if (image.src.startsWith('https://')) {
+    return image.src
+  }
+
+  return null
+}
+
 export async function GET() {
   const images = await readImages()
   return jsonResponse({ images })
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  try {
+    const authError = await requireAdmin(request)
 
-  if (authError) {
-    return authError
+    if (authError) {
+      return authError
+    }
+
+    const formData = await request.formData()
+    const file = formData.get('image')
+    const titleValue = formData.get('title')
+    const categoryValue = formData.get('category')
+
+    if (!(file instanceof File)) {
+      return jsonError('Please choose an image.')
+    }
+
+    if (file.size > maxFileSize) {
+      return jsonError('Please choose an image smaller than 2 MB.')
+    }
+
+    const extension = allowedTypes.get(file.type)
+
+    if (!extension) {
+      return jsonError('Only JPG, PNG, and WebP images are allowed.')
+    }
+
+    const category = String(categoryValue || 'gift-hampers') as GalleryCategory
+
+    if (!allowedCategories.includes(category)) {
+      return jsonError('Please choose a valid category.')
+    }
+
+    const imageTitle = String(titleValue || '').trim() || 'Gallery Image'
+    const imageId = `custom-${Date.now()}-${randomUUID()}`
+    const fileName = `${imageId}.${extension}`
+    const bytes = Buffer.from(await file.arrayBuffer())
+    const blobPath = `gallery/${fileName}`
+
+    let publicSrc = `/gallery/uploads/${fileName}`
+
+    if (isVercel) {
+      await put(blobPath, bytes, {
+        access: 'private',
+        contentType: file.type,
+      })
+      publicSrc = `/api/gallery/images/${encodeURIComponent(fileName)}`
+    } else {
+      await ensureUploadsDir()
+      await writeFile(path.join(uploadsDir, fileName), bytes)
+    }
+
+    const uploadedImage: GalleryImage = {
+      id: imageId,
+      src: publicSrc,
+      alt: imageTitle,
+      category,
+      title: imageTitle,
+      isCustom: true,
+      ...(isVercel ? { blobPath } : {}),
+    }
+
+    const images = await readImages()
+    const nextImages = [uploadedImage, ...images]
+    await saveImages(nextImages)
+
+    return jsonResponse({ image: uploadedImage, images: nextImages }, { status: 201 })
+  } catch (error) {
+    console.error('Gallery upload failed:', error)
+    return jsonError(`Could not upload this image: ${getErrorMessage(error)}`, 500)
   }
-
-  const formData = await request.formData()
-  const file = formData.get('image')
-  const titleValue = formData.get('title')
-  const categoryValue = formData.get('category')
-
-  if (!(file instanceof File)) {
-    return jsonError('Please choose an image.')
-  }
-
-  if (file.size > maxFileSize) {
-    return jsonError('Please choose an image smaller than 2 MB.')
-  }
-
-  const extension = allowedTypes.get(file.type)
-
-  if (!extension) {
-    return jsonError('Only JPG, PNG, and WebP images are allowed.')
-  }
-
-  const category = String(categoryValue || 'gift-hampers') as GalleryCategory
-
-  if (!allowedCategories.includes(category)) {
-    return jsonError('Please choose a valid category.')
-  }
-
-  const imageTitle = String(titleValue || '').trim() || 'Gallery Image'
-  const imageId = `custom-${Date.now()}-${randomUUID()}`
-  const fileName = `${imageId}.${extension}`
-  const bytes = Buffer.from(await file.arrayBuffer())
-
-  let publicSrc = `/gallery/uploads/${fileName}`
-
-  if (isVercel) {
-    const blob = await put(`gallery/${fileName}`, bytes, {
-      access: 'public',
-      contentType: file.type,
-    })
-    publicSrc = blob.url
-  } else {
-    await ensureUploadsDir()
-    await writeFile(path.join(uploadsDir, fileName), bytes)
-  }
-
-  const uploadedImage: GalleryImage = {
-    id: imageId,
-    src: publicSrc,
-    alt: imageTitle,
-    category,
-    title: imageTitle,
-    isCustom: true,
-  }
-
-  const images = await readImages()
-  const nextImages = [uploadedImage, ...images]
-  await saveImages(nextImages)
-
-  return jsonResponse({ image: uploadedImage, images: nextImages }, { status: 201 })
 }
 
 export async function DELETE(request: NextRequest) {
@@ -179,9 +207,11 @@ export async function DELETE(request: NextRequest) {
     }
   }
 
-  if (isVercel && imageToDelete?.src.startsWith('https://')) {
+  const blobPath = imageToDelete ? getImageBlobPath(imageToDelete) : null
+
+  if (isVercel && blobPath) {
     try {
-      await del(imageToDelete.src)
+      await del(blobPath)
     } catch {
       // The gallery index should still be cleaned up if the file is already gone.
     }
