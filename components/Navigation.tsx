@@ -27,7 +27,7 @@ export default function Navigation() {
             className="relative w-90 h-90 flex items-center flex-shrink-0 z-10"
           >
             <Image
-              src="/Logo_white.svg"
+              src="/Logo.svg"
               alt="MK Creations Hub"
               fill
               className="object-contain"

@@ -10,7 +10,7 @@ export default function Footer() {
           <div>
             <div className="relative w-90 h-90 mb-4">
               <Image
-                src="/Logo_white.svg"
+                src="/Logo.svg"
                 alt="MK Creations Hub"
                 fill
                 className="object-contain"
