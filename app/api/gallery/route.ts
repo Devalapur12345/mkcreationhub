@@ -4,7 +4,7 @@ import path from 'path'
 import { get, put, del } from '@vercel/blob'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-auth'
-import type { GalleryCategory, GalleryImage } from '@/lib/gallery'
+import { uploadableGalleryCategories, type GalleryCategory, type GalleryImage } from '@/lib/gallery'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -20,7 +20,7 @@ const allowedTypes = new Map([
   ['image/webp', 'webp'],
 ])
 
-const allowedCategories: GalleryCategory[] = ['floral', 'luxury', 'gifts', 'sweets']
+const allowedCategories = uploadableGalleryCategories
 
 async function ensureUploadsDir() {
   if (!isVercel) {
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     return jsonError('Only JPG, PNG, and WebP images are allowed.')
   }
 
-  const category = String(categoryValue || 'gifts') as GalleryCategory
+  const category = String(categoryValue || 'gift-hampers') as GalleryCategory
 
   if (!allowedCategories.includes(category)) {
     return jsonError('Please choose a valid category.')

@@ -84,6 +84,10 @@ export const galleryFilters = [
   },
 ]
 
+export const uploadableGalleryCategories = galleryFilters
+  .map((filter) => filter.id)
+  .filter((id): id is GalleryCategory => id !== 'all' && id !== 'videos')
+
 export const galleryStorageKey = 'MK Creation Hub-gallery-images'
 export const adminSessionKey = 'MK Creation Hub-admin-logged-in'
 

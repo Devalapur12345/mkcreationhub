@@ -5,6 +5,7 @@ import { ImagePlus, LogOut, Trash2, Video } from 'lucide-react'
 import {
   galleryStorageKey,
   galleryFilters,
+  uploadableGalleryCategories,
   type GalleryCategory,
   type GalleryImage,
 } from '@/lib/gallery'
@@ -40,7 +41,7 @@ export default function AdminGalleryManager() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [title, setTitle] = useState('')
-  const [category, setCategory] = useState<GalleryCategory>('gifts')
+  const [category, setCategory] = useState<GalleryCategory>('gift-hampers')
   const [file, setFile] = useState<File | null>(null)
   const [images, setImages] = useState<GalleryImage[]>([])
   const [message, setMessage] = useState('')
@@ -53,7 +54,11 @@ export default function AdminGalleryManager() {
   const [isVideoSaving, setIsVideoSaving] = useState(false)
 
   const categoryOptions = useMemo(
-    () => galleryFilters.filter((filter) => filter.id !== 'all') as { category: string; id: GalleryCategory }[],
+    () =>
+      galleryFilters.filter(
+        (filter): filter is { category: string; id: GalleryCategory } =>
+          uploadableGalleryCategories.includes(filter.id as GalleryCategory),
+      ),
     [],
   )
 
@@ -220,7 +225,7 @@ export default function AdminGalleryManager() {
 
       setImages(data.images ?? [])
       setTitle('')
-      setCategory('gifts')
+      setCategory('gift-hampers')
       setFile(null)
       setMessage('Image added to live gallery.')
     } catch {
