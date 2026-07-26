@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 const uploadsDir = path.join(process.cwd(), 'public', 'testimonials', 'uploads')
 const manifestPath = path.join(uploadsDir, 'videos.json')
 const isVercel = process.env.VERCEL === '1' || Boolean(process.env.VERCEL_URL)
-const maxFileSize = 50 * 1024 * 1024
+const maxFileSize = 300 * 1024 * 1024
 
 const allowedTypes = new Map([
   ['video/mp4', 'mp4'],
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (file.size > maxFileSize) {
-    return jsonError('Please choose a video smaller than 50 MB.')
+    return jsonError('Please choose a video smaller than 300 MB.')
   }
 
   const extension = allowedTypes.get(file.type)

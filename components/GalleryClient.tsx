@@ -121,7 +121,8 @@ export default function GalleryClient() {
                 key={image.id}
                 type="button"
                 onClick={() => openPreview(image)}
-                className="group relative bg-card rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 text-left"
+                className="group relative overflow-hidden rounded-lg bg-card shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+                aria-label={`Preview ${image.alt}`}
               >
                 <div className="relative h-64 md:h-72 overflow-hidden bg-secondary/30">
                   <img
@@ -129,15 +130,7 @@ export default function GalleryClient() {
                     alt={image.alt}
                     className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                    <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-center">
-                      <p className="font-semibold text-lg">{image.title}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold text-foreground mb-2">{image.title}</h3>
-                  <p className="text-sm text-muted-foreground capitalize">{image.category}</p>
+                  <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/15" />
                 </div>
               </button>
             ))}
@@ -202,14 +195,6 @@ export default function GalleryClient() {
                 className="h-[75vh] w-full object-contain transition-transform duration-200"
                 style={{ transform: `scale(${zoomLevel})` }}
               />
-            </div>
-
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h3 className="text-xl font-semibold text-foreground">{selectedImage.title}</h3>
-                <p className="text-sm capitalize text-muted-foreground">{selectedImage.category}</p>
-              </div>
-              <p className="text-sm text-muted-foreground">{selectedImage.alt}</p>
             </div>
           </div>
         </div>

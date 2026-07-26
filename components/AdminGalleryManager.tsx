@@ -12,7 +12,7 @@ import {
 import type { TestimonialVideo } from '@/lib/testimonials'
 
 const maxFileSize = 2 * 1024 * 1024
-const maxVideoFileSize = 50 * 1024 * 1024
+const maxVideoFileSize = 300 * 1024 * 1024
 
 function readLegacyLocalImages() {
   try {
@@ -40,13 +40,11 @@ export default function AdminGalleryManager() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [title, setTitle] = useState('')
   const [category, setCategory] = useState<GalleryCategory>('gift-hampers')
   const [file, setFile] = useState<File | null>(null)
   const [images, setImages] = useState<GalleryImage[]>([])
   const [message, setMessage] = useState('')
   const [isSaving, setIsSaving] = useState(false)
-  const [videoTitle, setVideoTitle] = useState('')
   const [videoDescription, setVideoDescription] = useState('')
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videos, setVideos] = useState<TestimonialVideo[]>([])
@@ -204,7 +202,6 @@ export default function AdminGalleryManager() {
     }
 
     const formData = new FormData()
-    formData.append('title', title)
     formData.append('category', category)
     formData.append('image', file)
 
@@ -224,7 +221,6 @@ export default function AdminGalleryManager() {
       }
 
       setImages(data.images ?? [])
-      setTitle('')
       setCategory('gift-hampers')
       setFile(null)
       setMessage('Image added to live gallery.')
@@ -269,12 +265,11 @@ export default function AdminGalleryManager() {
     }
 
     if (videoFile.size > maxVideoFileSize) {
-      setVideoMessage('Please choose a video smaller than 50 MB.')
+      setVideoMessage('Please choose a video smaller than 300 MB.')
       return
     }
 
     const formData = new FormData()
-    formData.append('title', videoTitle)
     formData.append('description', videoDescription)
     formData.append('video', videoFile)
 
@@ -294,7 +289,6 @@ export default function AdminGalleryManager() {
       }
 
       setVideos(data.videos ?? [])
-      setVideoTitle('')
       setVideoDescription('')
       setVideoFile(null)
       setVideoMessage('Video added to testimonials.')
@@ -404,19 +398,6 @@ export default function AdminGalleryManager() {
             </div>
 
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-foreground mb-2">
-                Image Title
-              </label>
-              <input
-                id="title"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                className="w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                placeholder="Gift basket"
-              />
-            </div>
-
-            <div>
               <label htmlFor="category" className="block text-sm font-medium text-foreground mb-2">
                 Category
               </label>
@@ -504,20 +485,7 @@ export default function AdminGalleryManager() {
           >
             <div>
               <h2 className="text-2xl font-serif font-bold text-foreground mb-2">Add Testimonial Reel</h2>
-              <p className="text-sm text-muted-foreground">Upload a vertical MP4, WebM, or MOV video under 50 MB.</p>
-            </div>
-
-            <div>
-              <label htmlFor="video-title" className="block text-sm font-medium text-foreground mb-2">
-                Video Title
-              </label>
-              <input
-                id="video-title"
-                value={videoTitle}
-                onChange={(event) => setVideoTitle(event.target.value)}
-                className="w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                placeholder="Happy client"
-              />
+              <p className="text-sm text-muted-foreground">Upload a vertical MP4, WebM, or MOV video under 300 MB.</p>
             </div>
 
             <div>

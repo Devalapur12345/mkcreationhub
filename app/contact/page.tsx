@@ -91,8 +91,8 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-foreground mb-1">Working Hours</h3>
-                  <p className="text-muted-foreground">Monday - Saturday</p>
-                  <p className="text-muted-foreground">10:00 AM - 8:00 PM</p>
+                  {/* <p className="text-muted-foreground"></p> */}
+                  <p className="text-muted-foreground">24/7</p>
                 </div>
               </div>
             </div>
