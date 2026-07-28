@@ -4,13 +4,14 @@ import path from 'path'
 import { get, put, del } from '@vercel/blob'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-auth'
-import { uploadableGalleryCategories, type GalleryCategory, type GalleryImage } from '@/lib/gallery'
+import { defaultImages, uploadableGalleryCategories, type GalleryCategory, type GalleryImage } from '@/lib/gallery'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const uploadsDir = path.join(process.cwd(), 'public', 'gallery', 'uploads')
 const manifestPath = path.join(uploadsDir, 'images.json')
+const hiddenDefaultManifestPath = path.join(uploadsDir, 'hidden-default-images.json')
 const isVercel = process.env.VERCEL === '1' || Boolean(process.env.VERCEL_URL)
 const maxFileSize = 2 * 1024 * 1024
 
@@ -67,6 +68,45 @@ async function saveImages(images: GalleryImage[]) {
   await writeFile(manifestPath, JSON.stringify(images, null, 2), 'utf8')
 }
 
+async function readHiddenDefaultImageIds() {
+  if (isVercel) {
+    try {
+      const blob = await get('gallery/hidden-default-images.json', { access: 'private', useCache: false })
+      if (!blob) {
+        return []
+      }
+
+      const text = await new Response(blob.stream).text()
+      return JSON.parse(text) as string[]
+    } catch {
+      return []
+    }
+  }
+
+  await ensureUploadsDir()
+
+  try {
+    const file = await readFile(hiddenDefaultManifestPath, 'utf8')
+    return JSON.parse(file) as string[]
+  } catch {
+    return []
+  }
+}
+
+async function saveHiddenDefaultImageIds(imageIds: string[]) {
+  if (isVercel) {
+    await put('gallery/hidden-default-images.json', JSON.stringify(imageIds, null, 2), {
+      access: 'private',
+      contentType: 'application/json',
+      allowOverwrite: true,
+    })
+    return
+  }
+
+  await ensureUploadsDir()
+  await writeFile(hiddenDefaultManifestPath, JSON.stringify(imageIds, null, 2), 'utf8')
+}
+
 function jsonResponse(body: unknown, init?: ResponseInit) {
   const response = NextResponse.json(body, init)
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
@@ -102,7 +142,8 @@ function getImageBlobPath(image: GalleryImage) {
 
 export async function GET() {
   const images = await readImages()
-  return jsonResponse({ images })
+  const hiddenDefaultImageIds = await readHiddenDefaultImageIds()
+  return jsonResponse({ images, hiddenDefaultImageIds })
 }
 
 export async function POST(request: NextRequest) {
@@ -168,10 +209,11 @@ export async function POST(request: NextRequest) {
     }
 
     const images = await readImages()
+    const hiddenDefaultImageIds = await readHiddenDefaultImageIds()
     const nextImages = [uploadedImage, ...images]
     await saveImages(nextImages)
 
-    return jsonResponse({ image: uploadedImage, images: nextImages }, { status: 201 })
+    return jsonResponse({ image: uploadedImage, images: nextImages, hiddenDefaultImageIds }, { status: 201 })
   } catch (error) {
     console.error('Gallery upload failed:', error)
     return jsonError(`Could not upload this image: ${getErrorMessage(error)}`, 500)
@@ -194,6 +236,7 @@ export async function DELETE(request: NextRequest) {
   const images = await readImages()
   const imageToDelete = images.find((image) => image.id === imageId)
   const nextImages = images.filter((image) => image.id !== imageId)
+  const hiddenDefaultImageIds = await readHiddenDefaultImageIds()
 
   if (imageToDelete?.src.startsWith('/gallery/uploads/')) {
     const fileName = path.basename(imageToDelete.src)
@@ -217,7 +260,17 @@ export async function DELETE(request: NextRequest) {
     }
   }
 
-  await saveImages(nextImages)
+  if (imageToDelete) {
+    await saveImages(nextImages)
+    return jsonResponse({ images: nextImages, hiddenDefaultImageIds })
+  }
 
-  return jsonResponse({ images: nextImages })
+  const isDefaultImage = defaultImages.some((image) => image.id === imageId)
+
+  if (isDefaultImage && !hiddenDefaultImageIds.includes(imageId)) {
+    hiddenDefaultImageIds.push(imageId)
+    await saveHiddenDefaultImageIds(hiddenDefaultImageIds)
+  }
+
+  return jsonResponse({ images: nextImages, hiddenDefaultImageIds })
 }

@@ -18,7 +18,10 @@ const allowedTypes = new Map([
   ['video/mp4', 'mp4'],
   ['video/webm', 'webm'],
   ['video/quicktime', 'mov'],
+  ['video/x-m4v', 'mp4'],
 ])
+
+const allowedExtensions = new Set(['mp4', 'webm', 'mov'])
 
 async function ensureUploadsDir() {
   if (!isVercel) {
@@ -77,69 +80,94 @@ function jsonError(message: string, status = 400) {
   return jsonResponse({ message }, { status })
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown server error'
+}
+
+function getVideoExtension(file: File) {
+  const extensionFromType = allowedTypes.get(file.type)
+
+  if (extensionFromType) {
+    return extensionFromType
+  }
+
+  const extensionFromName = file.name.split('.').pop()?.toLowerCase()
+
+  if (extensionFromName && allowedExtensions.has(extensionFromName)) {
+    return extensionFromName
+  }
+
+  return null
+}
+
 export async function GET() {
   const videos = await readVideos()
   return jsonResponse({ videos })
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdmin(request)
+  try {
+    const authError = await requireAdmin(request)
 
-  if (authError) {
-    return authError
+    if (authError) {
+      return authError
+    }
+
+    const formData = await request.formData()
+    const file = formData.get('video')
+    const titleValue = formData.get('title')
+    const descriptionValue = formData.get('description')
+
+    if (!(file instanceof File)) {
+      return jsonError('Please choose a video.')
+    }
+
+    if (file.size > maxFileSize) {
+      return jsonError('Please choose a video smaller than 300 MB.')
+    }
+
+    const extension = getVideoExtension(file)
+
+    if (!extension) {
+      return jsonError('Only MP4, WebM, and MOV videos are allowed.')
+    }
+
+    const videoTitle = String(titleValue || '').trim() || 'Success Story'
+    const videoDescription = String(descriptionValue || '').trim()
+    const videoId = `testimonial-${Date.now()}-${randomUUID()}`
+    const fileName = `${videoId}.${extension}`
+    const bytes = Buffer.from(await file.arrayBuffer())
+
+    const publicSrc = `/api/testimonials/videos/${encodeURIComponent(fileName)}`
+
+    if (isVercel) {
+      await put(`testimonials/${fileName}`, bytes, {
+        access: 'private',
+        contentType: file.type || `video/${extension}`,
+        allowOverwrite: true,
+      })
+    } else {
+      await ensureUploadsDir()
+      await writeFile(path.join(uploadsDir, fileName), bytes)
+    }
+
+    const uploadedVideo: TestimonialVideo = {
+      id: videoId,
+      src: publicSrc,
+      title: videoTitle,
+      description: videoDescription,
+      isCustom: true,
+    }
+
+    const videos = await readVideos()
+    const nextVideos = [uploadedVideo, ...videos]
+    await saveVideos(nextVideos)
+
+    return jsonResponse({ video: uploadedVideo, videos: nextVideos }, { status: 201 })
+  } catch (error) {
+    console.error('Testimonial upload failed:', error)
+    return jsonError(`Could not upload this video: ${getErrorMessage(error)}`, 500)
   }
-
-  const formData = await request.formData()
-  const file = formData.get('video')
-  const titleValue = formData.get('title')
-  const descriptionValue = formData.get('description')
-
-  if (!(file instanceof File)) {
-    return jsonError('Please choose a video.')
-  }
-
-  if (file.size > maxFileSize) {
-    return jsonError('Please choose a video smaller than 300 MB.')
-  }
-
-  const extension = allowedTypes.get(file.type)
-
-  if (!extension) {
-    return jsonError('Only MP4, WebM, and MOV videos are allowed.')
-  }
-
-  const videoTitle = String(titleValue || '').trim() || 'Client Testimonial'
-  const videoDescription = String(descriptionValue || '').trim()
-  const videoId = `testimonial-${Date.now()}-${randomUUID()}`
-  const fileName = `${videoId}.${extension}`
-  const bytes = Buffer.from(await file.arrayBuffer())
-
-  let publicSrc = `/testimonials/uploads/${fileName}`
-
-  if (isVercel) {
-    const blob = await put(`testimonials/${fileName}`, bytes, {
-      access: 'public',
-      contentType: file.type,
-    })
-    publicSrc = blob.url
-  } else {
-    await ensureUploadsDir()
-    await writeFile(path.join(uploadsDir, fileName), bytes)
-  }
-
-  const uploadedVideo: TestimonialVideo = {
-    id: videoId,
-    src: publicSrc,
-    title: videoTitle,
-    description: videoDescription,
-    isCustom: true,
-  }
-
-  const videos = await readVideos()
-  const nextVideos = [uploadedVideo, ...videos]
-  await saveVideos(nextVideos)
-
-  return jsonResponse({ video: uploadedVideo, videos: nextVideos }, { status: 201 })
 }
 
 export async function DELETE(request: NextRequest) {
@@ -159,8 +187,8 @@ export async function DELETE(request: NextRequest) {
   const videoToDelete = videos.find((video) => video.id === videoId)
   const nextVideos = videos.filter((video) => video.id !== videoId)
 
-  if (videoToDelete?.src.startsWith('/testimonials/uploads/')) {
-    const fileName = path.basename(videoToDelete.src)
+  if (videoToDelete?.src.startsWith('/testimonials/uploads/') || videoToDelete?.src.startsWith('/api/testimonials/videos/')) {
+    const fileName = decodeURIComponent(path.basename(videoToDelete.src))
 
     try {
       if (!isVercel) {
@@ -171,9 +199,13 @@ export async function DELETE(request: NextRequest) {
     }
   }
 
-  if (isVercel && videoToDelete?.src.startsWith('https://')) {
+  if (isVercel && videoToDelete) {
     try {
-      await del(videoToDelete.src)
+      const fileName = videoToDelete.src.startsWith('/api/testimonials/videos/')
+        ? decodeURIComponent(path.basename(videoToDelete.src))
+        : path.basename(videoToDelete.src)
+
+      await del(`testimonials/${fileName}`)
     } catch {
       // Keep the manifest correct even if the video file was already removed.
     }

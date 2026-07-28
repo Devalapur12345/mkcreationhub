@@ -7,6 +7,7 @@ import { defaultImages, galleryFilters, type GalleryImage } from '@/lib/gallery'
 export default function GalleryClient() {
   const [activeCategory, setActiveCategory] = useState('all')
   const [customImages, setCustomImages] = useState<GalleryImage[]>([])
+  const [hiddenDefaultImageIds, setHiddenDefaultImageIds] = useState<string[]>([])
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null)
   const [zoomLevel, setZoomLevel] = useState(1)
   const categoryScrollRef = useRef<HTMLDivElement | null>(null)
@@ -22,13 +23,15 @@ export default function GalleryClient() {
     const loadCustomImages = async () => {
       try {
         const response = await fetch('/api/gallery', { cache: 'no-store' })
-        const data = (await response.json()) as { images?: GalleryImage[] }
+        const data = (await response.json()) as { images?: GalleryImage[]; hiddenDefaultImageIds?: string[] }
 
         if (response.ok) {
           setCustomImages(data.images ?? [])
+          setHiddenDefaultImageIds(data.hiddenDefaultImageIds ?? [])
         }
       } catch {
         setCustomImages([])
+        setHiddenDefaultImageIds([])
       }
     }
 
@@ -51,7 +54,8 @@ export default function GalleryClient() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedImage])
 
-  const images = [...customImages, ...defaultImages]
+  const visibleDefaultImages = defaultImages.filter((image) => !hiddenDefaultImageIds.includes(image.id))
+  const images = [...customImages, ...visibleDefaultImages]
   const filteredImages = activeCategory === 'all' ? images : images.filter((img) => img.category === activeCategory)
 
   const openPreview = (image: GalleryImage) => {
@@ -76,7 +80,7 @@ export default function GalleryClient() {
             <button
               type="button"
               onClick={() => scrollCategory('left')}
-              className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg shadow-black/10 transition hover:bg-secondary sm:hidden"
+              className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg shadow-black/10 transition hover:bg-secondary md:hidden"
               aria-label="Scroll categories left"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -84,7 +88,7 @@ export default function GalleryClient() {
 
             <div
               ref={categoryScrollRef}
-              className="flex gap-4 overflow-x-auto px-12 py-4 scroll-smooth no-scrollbar"
+              className="flex gap-4 overflow-x-auto px-12 py-4 scroll-smooth no-scrollbar md:flex-wrap md:justify-center md:overflow-visible md:px-0"
             >
               {galleryFilters.map((gallery) => (
                 <button
@@ -104,7 +108,7 @@ export default function GalleryClient() {
             <button
               type="button"
               onClick={() => scrollCategory('right')}
-              className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg shadow-black/10 transition hover:bg-secondary sm:hidden"
+              className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg shadow-black/10 transition hover:bg-secondary md:hidden"
               aria-label="Scroll categories right"
             >
               <ChevronRight className="h-5 w-5" />

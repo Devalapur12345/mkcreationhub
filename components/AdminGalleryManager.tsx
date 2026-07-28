@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { ImagePlus, LogOut, Trash2, Video } from 'lucide-react'
 import {
+  defaultImages,
   galleryStorageKey,
   galleryFilters,
   uploadableGalleryCategories,
@@ -36,6 +37,15 @@ function dataUrlToFile(dataUrl: string, fileName: string) {
   return new File([bytes], fileName, { type: mime })
 }
 
+async function readResponseMessage(response: Response, fallback: string) {
+  try {
+    const data = (await response.json()) as { message?: string }
+    return data.message || fallback
+  } catch {
+    return fallback
+  }
+}
+
 export default function AdminGalleryManager() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [username, setUsername] = useState('')
@@ -43,6 +53,7 @@ export default function AdminGalleryManager() {
   const [category, setCategory] = useState<GalleryCategory>('gift-hampers')
   const [file, setFile] = useState<File | null>(null)
   const [images, setImages] = useState<GalleryImage[]>([])
+  const [hiddenDefaultImageIds, setHiddenDefaultImageIds] = useState<string[]>([])
   const [message, setMessage] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [videoDescription, setVideoDescription] = useState('')
@@ -58,6 +69,11 @@ export default function AdminGalleryManager() {
           uploadableGalleryCategories.includes(filter.id as GalleryCategory),
       ),
     [],
+  )
+
+  const manageableImages = useMemo(
+    () => [...images, ...defaultImages.filter((image) => !hiddenDefaultImageIds.includes(image.id))],
+    [hiddenDefaultImageIds, images],
   )
 
   useEffect(() => {
@@ -82,8 +98,9 @@ export default function AdminGalleryManager() {
     const loadImages = async () => {
       try {
         const response = await fetch('/api/gallery', { cache: 'no-store' })
-        const data = (await response.json()) as { images?: GalleryImage[] }
+        const data = (await response.json()) as { images?: GalleryImage[]; hiddenDefaultImageIds?: string[] }
         let nextImages = data.images ?? []
+        let nextHiddenDefaultImageIds = data.hiddenDefaultImageIds ?? []
         const legacyImages = readLegacyLocalImages().filter((image) => image.src.startsWith('data:image/'))
 
         if (legacyImages.length > 0) {
@@ -105,10 +122,14 @@ export default function AdminGalleryManager() {
               method: 'POST',
               body: formData,
             })
-            const migrateData = (await migrateResponse.json()) as { images?: GalleryImage[] }
+            const migrateData = (await migrateResponse.json()) as {
+              images?: GalleryImage[]
+              hiddenDefaultImageIds?: string[]
+            }
 
             if (migrateResponse.ok) {
               nextImages = migrateData.images ?? nextImages
+              nextHiddenDefaultImageIds = migrateData.hiddenDefaultImageIds ?? nextHiddenDefaultImageIds
             }
           }
 
@@ -117,6 +138,7 @@ export default function AdminGalleryManager() {
         }
 
         setImages(nextImages)
+        setHiddenDefaultImageIds(nextHiddenDefaultImageIds)
       } catch {
         setMessage('Could not load uploaded images.')
       }
@@ -213,7 +235,11 @@ export default function AdminGalleryManager() {
         method: 'POST',
         body: formData,
       })
-      const data = (await response.json()) as { images?: GalleryImage[]; message?: string }
+      const data = (await response.json()) as {
+        images?: GalleryImage[]
+        hiddenDefaultImageIds?: string[]
+        message?: string
+      }
 
       if (!response.ok) {
         setMessage(data.message || 'Could not upload this image.')
@@ -221,6 +247,7 @@ export default function AdminGalleryManager() {
       }
 
       setImages(data.images ?? [])
+      setHiddenDefaultImageIds(data.hiddenDefaultImageIds ?? hiddenDefaultImageIds)
       setCategory('gift-hampers')
       setFile(null)
       setMessage('Image added to live gallery.')
@@ -242,7 +269,11 @@ export default function AdminGalleryManager() {
         },
         body: JSON.stringify({ id: imageId }),
       })
-      const data = (await response.json()) as { images?: GalleryImage[]; message?: string }
+      const data = (await response.json()) as {
+        images?: GalleryImage[]
+        hiddenDefaultImageIds?: string[]
+        message?: string
+      }
 
       if (!response.ok) {
         setMessage(data.message || 'Could not remove this image.')
@@ -250,6 +281,7 @@ export default function AdminGalleryManager() {
       }
 
       setImages(data.images ?? [])
+      setHiddenDefaultImageIds(data.hiddenDefaultImageIds ?? hiddenDefaultImageIds)
       setMessage('Image removed from live gallery.')
     } catch {
       setMessage('Could not remove this image. Please try again.')
@@ -281,12 +313,13 @@ export default function AdminGalleryManager() {
         method: 'POST',
         body: formData,
       })
-      const data = (await response.json()) as { videos?: TestimonialVideo[]; message?: string }
 
       if (!response.ok) {
-        setVideoMessage(data.message || 'Could not upload this video.')
+        setVideoMessage(await readResponseMessage(response, 'Could not upload this video.'))
         return
       }
+
+      const data = (await response.json()) as { videos?: TestimonialVideo[]; message?: string }
 
       setVideos(data.videos ?? [])
       setVideoDescription('')
@@ -442,15 +475,15 @@ export default function AdminGalleryManager() {
           </form>
 
           <section>
-            <h2 className="text-2xl font-serif font-bold text-foreground mb-5">Uploaded Images</h2>
+            <h2 className="text-2xl font-serif font-bold text-foreground mb-5">Gallery Images</h2>
 
-            {images.length === 0 ? (
+            {manageableImages.length === 0 ? (
               <div className="bg-card border border-border rounded-lg p-8 text-center">
-                <p className="text-muted-foreground">No uploaded images yet.</p>
+                <p className="text-muted-foreground">No gallery images yet.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {images.map((image) => (
+                {manageableImages.map((image) => (
                   <div key={image.id} className="bg-card border border-border rounded-lg overflow-hidden shadow-lg">
                     <div className="h-56 bg-secondary/30">
                       <img src={image.src} alt={image.alt} className="h-full w-full object-cover" />
@@ -484,7 +517,7 @@ export default function AdminGalleryManager() {
             className="bg-card border border-border rounded-lg p-6 shadow-lg h-fit space-y-5"
           >
             <div>
-              <h2 className="text-2xl font-serif font-bold text-foreground mb-2">Add Testimonial Reel</h2>
+              <h2 className="text-2xl font-serif font-bold text-foreground mb-2">Add Success Story Reel</h2>
               <p className="text-sm text-muted-foreground">Upload a vertical MP4, WebM, or MOV video under 300 MB.</p>
             </div>
 
@@ -528,11 +561,11 @@ export default function AdminGalleryManager() {
           </form>
 
           <section>
-            <h2 className="text-2xl font-serif font-bold text-foreground mb-5">Testimonial Videos</h2>
+            <h2 className="text-2xl font-serif font-bold text-foreground mb-5">Success Story Videos</h2>
 
             {videos.length === 0 ? (
               <div className="bg-card border border-border rounded-lg p-8 text-center">
-                <p className="text-muted-foreground">No testimonial videos yet.</p>
+                <p className="text-muted-foreground">No Success Story videos yet.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
