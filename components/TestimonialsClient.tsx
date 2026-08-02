@@ -31,11 +31,11 @@ export default function TestimonialsClient() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {isLoading ? (
           <div className="text-center py-16">
-            <p className="text-lg text-muted-foreground">Loading testimonials...</p>
+            <p className="text-lg text-muted-foreground">Loading sucess story...</p>
           </div>
         ) : videos.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-lg text-muted-foreground">No testimonial videos added yet.</p>
+            <p className="text-lg text-muted-foreground">No success story videos added yet.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">

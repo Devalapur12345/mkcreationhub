@@ -1,8 +1,38 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react'
-import { defaultImages, galleryFilters, type GalleryImage } from '@/lib/gallery'
+import {
+  Baby,
+  Candy,
+  Cherry,
+  ChevronLeft,
+  ChevronRight,
+  Crown,
+  Footprints,
+  Gift,
+  PackageCheck,
+  Ribbon,
+  RotateCcw,
+  Star,
+  X,
+  ZoomIn,
+  ZoomOut,
+  type LucideIcon,
+} from 'lucide-react'
+import { defaultImages, galleryFilters, normalizeGalleryCategory, type GalleryImage } from '@/lib/gallery'
+
+const categoryIcons = {
+  all: Gift,
+  bride: Crown,
+  groom: Ribbon,
+  'gift-hampers': PackageCheck,
+  footwear: Footprints,
+  'chocolates-sweet': Candy,
+  'dry-fruits-fruits': Cherry,
+  'baby-gifts': Baby,
+  'birthday-gifts': Gift,
+  'success-stories': Star,
+} satisfies Record<(typeof galleryFilters)[number]['id'], LucideIcon>
 
 export default function GalleryClient() {
   const [activeCategory, setActiveCategory] = useState('all')
@@ -56,7 +86,8 @@ export default function GalleryClient() {
 
   const visibleDefaultImages = defaultImages.filter((image) => !hiddenDefaultImageIds.includes(image.id))
   const images = [...customImages, ...visibleDefaultImages]
-  const filteredImages = activeCategory === 'all' ? images : images.filter((img) => img.category === activeCategory)
+  const filteredImages =
+    activeCategory === 'all' ? images : images.filter((img) => normalizeGalleryCategory(img.category) === activeCategory)
 
   const openPreview = (image: GalleryImage) => {
     setSelectedImage(image)
@@ -80,7 +111,7 @@ export default function GalleryClient() {
             <button
               type="button"
               onClick={() => scrollCategory('left')}
-              className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg shadow-black/10 transition hover:bg-secondary md:hidden"
+              className="absolute left-0 top-8 z-10 rounded-full bg-background/95 p-2 text-primary shadow-lg shadow-black/10 ring-1 ring-border transition hover:bg-secondary lg:hidden"
               aria-label="Scroll categories left"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -88,27 +119,45 @@ export default function GalleryClient() {
 
             <div
               ref={categoryScrollRef}
-              className="flex gap-4 overflow-x-auto px-12 py-4 scroll-smooth no-scrollbar md:flex-wrap md:justify-center md:overflow-visible md:px-0"
+              className="flex snap-x gap-5 overflow-x-auto px-11 py-2 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:gap-6 lg:grid lg:grid-cols-10 lg:gap-4 lg:overflow-visible lg:px-0"
             >
-              {galleryFilters.map((gallery) => (
-                <button
-                  key={gallery.id}
-                  onClick={() => setActiveCategory(gallery.id)}
-                  className={`min-w-max whitespace-nowrap rounded-full px-5 py-3 text-sm font-medium transition-all ${
-                    activeCategory === gallery.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-foreground hover:bg-secondary/80'
-                  }`}
-                >
-                  {gallery.category}
-                </button>
-              ))}
+              {galleryFilters.map((gallery) => {
+                const CategoryIcon = categoryIcons[gallery.id]
+                const isActive = activeCategory === gallery.id
+
+                return (
+                  <button
+                    key={gallery.id}
+                    type="button"
+                    onClick={() => setActiveCategory(gallery.id)}
+                    className="group flex min-w-[82px] snap-start flex-col items-center gap-2 text-center outline-none sm:min-w-[94px] lg:min-w-0"
+                    aria-pressed={isActive}
+                  >
+                    <span
+                      className={`flex h-14 w-14 items-center justify-center rounded-full ring-1 transition-all duration-300 sm:h-16 sm:w-16 ${
+                        isActive
+                          ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 ring-primary'
+                          : 'bg-secondary/75 text-primary ring-secondary hover:bg-secondary hover:shadow-md'
+                      }`}
+                    >
+                      <CategoryIcon className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={1.8} />
+                    </span>
+                    <span
+                      className={`max-w-24 text-[11px] font-semibold leading-tight transition-colors sm:text-xs ${
+                        isActive ? 'text-primary' : 'text-foreground group-hover:text-primary'
+                      }`}
+                    >
+                      {gallery.category}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
 
             <button
               type="button"
               onClick={() => scrollCategory('right')}
-              className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg shadow-black/10 transition hover:bg-secondary md:hidden"
+              className="absolute right-0 top-8 z-10 rounded-full bg-background/95 p-2 text-primary shadow-lg shadow-black/10 ring-1 ring-border transition hover:bg-secondary lg:hidden"
               aria-label="Scroll categories right"
             >
               <ChevronRight className="h-5 w-5" />

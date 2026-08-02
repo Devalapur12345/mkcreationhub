@@ -6,10 +6,10 @@ export default function ClientReviews() {
     <section className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
-          <span className="text-sm font-semibold uppercase tracking-wider text-primary">Client Reviews</span>
-          <h2 className="mt-3 text-4xl font-serif font-bold text-foreground">What Clients Say</h2>
+          <span className="text-sm font-semibold uppercase tracking-wider text-primary">Customer Reviews</span>
+          <h2 className="mt-3 text-4xl font-serif font-bold text-foreground">Reviews From Our Customers</h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Honest words from clients who trusted us for their special gift arrangements.
+            Honest words from customers who trusted us for their special gift arrangements.
           </p>
         </div>
 

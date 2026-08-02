@@ -1,4 +1,4 @@
-export type TestimonialVideo = {
+export type TestimonialImage = {
   id: string
   src: string
   title: string

@@ -1,19 +1,22 @@
 'use client'
 
 import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { ImagePlus, LogOut, Trash2, Video } from 'lucide-react'
+import { ImagePlus, LogOut, Trash2 } from 'lucide-react'
 import {
   defaultImages,
   galleryStorageKey,
+  getGalleryCategoryLabel,
   galleryFilters,
+  normalizeGalleryCategory,
   uploadableGalleryCategories,
   type GalleryCategory,
+  type VisibleGalleryCategory,
   type GalleryImage,
 } from '@/lib/gallery'
-import type { TestimonialVideo } from '@/lib/testimonials'
+import type { TestimonialImage } from '@/lib/testimonials'
 
 const maxFileSize = 2 * 1024 * 1024
-const maxVideoFileSize = 300 * 1024 * 1024
+const maxTestimonialImageFileSize = 5 * 1024 * 1024
 
 function readLegacyLocalImages() {
   try {
@@ -50,23 +53,23 @@ export default function AdminGalleryManager() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [category, setCategory] = useState<GalleryCategory>('gift-hampers')
+  const [category, setCategory] = useState<VisibleGalleryCategory>('gift-hampers')
   const [file, setFile] = useState<File | null>(null)
   const [images, setImages] = useState<GalleryImage[]>([])
   const [hiddenDefaultImageIds, setHiddenDefaultImageIds] = useState<string[]>([])
   const [message, setMessage] = useState('')
   const [isSaving, setIsSaving] = useState(false)
-  const [videoDescription, setVideoDescription] = useState('')
-  const [videoFile, setVideoFile] = useState<File | null>(null)
-  const [videos, setVideos] = useState<TestimonialVideo[]>([])
-  const [videoMessage, setVideoMessage] = useState('')
-  const [isVideoSaving, setIsVideoSaving] = useState(false)
+  const [testimonialDescription, setTestimonialDescription] = useState('')
+  const [testimonialFile, setTestimonialFile] = useState<File | null>(null)
+  const [testimonialImages, setTestimonialImages] = useState<TestimonialImage[]>([])
+  const [testimonialMessage, setTestimonialMessage] = useState('')
+  const [isTestimonialSaving, setIsTestimonialSaving] = useState(false)
 
   const categoryOptions = useMemo(
     () =>
       galleryFilters.filter(
-        (filter): filter is { category: string; id: GalleryCategory } =>
-          uploadableGalleryCategories.includes(filter.id as GalleryCategory),
+        (filter): filter is { category: string; id: VisibleGalleryCategory } =>
+          uploadableGalleryCategories.includes(filter.id as VisibleGalleryCategory),
       ),
     [],
   )
@@ -115,7 +118,7 @@ export default function AdminGalleryManager() {
                 : 'jpg'
 
             formData.append('title', legacyImage.title)
-            formData.append('category', legacyImage.category)
+            formData.append('category', normalizeGalleryCategory(legacyImage.category))
             formData.append('image', dataUrlToFile(legacyImage.src, `${legacyImage.id}.${fileExtension}`))
 
             const migrateResponse = await fetch('/api/gallery', {
@@ -152,17 +155,17 @@ export default function AdminGalleryManager() {
       return
     }
 
-    const loadVideos = async () => {
+    const loadTestimonialImages = async () => {
       try {
         const response = await fetch('/api/testimonials', { cache: 'no-store' })
-        const data = (await response.json()) as { videos?: TestimonialVideo[] }
-        setVideos(data.videos ?? [])
+        const data = (await response.json()) as { images?: TestimonialImage[] }
+        setTestimonialImages(data.images ?? [])
       } catch {
-        setVideoMessage('Could not load testimonial videos.')
+        setTestimonialMessage('Could not load testimonial images.')
       }
     }
 
-    loadVideos()
+    loadTestimonialImages()
   }, [isLoggedIn])
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
@@ -288,25 +291,25 @@ export default function AdminGalleryManager() {
     }
   }
 
-  const handleVideoUpload = async (event: FormEvent<HTMLFormElement>) => {
+  const handleTestimonialImageUpload = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (!videoFile) {
-      setVideoMessage('Please choose a video.')
+    if (!testimonialFile) {
+      setTestimonialMessage('Please choose an image.')
       return
     }
 
-    if (videoFile.size > maxVideoFileSize) {
-      setVideoMessage('Please choose a video smaller than 300 MB.')
+    if (testimonialFile.size > maxTestimonialImageFileSize) {
+      setTestimonialMessage('Please choose an image smaller than 5 MB.')
       return
     }
 
     const formData = new FormData()
-    formData.append('description', videoDescription)
-    formData.append('video', videoFile)
+    formData.append('description', testimonialDescription)
+    formData.append('image', testimonialFile)
 
-    setIsVideoSaving(true)
-    setVideoMessage('Uploading video...')
+    setIsTestimonialSaving(true)
+    setTestimonialMessage('Uploading testimonial image...')
 
     try {
       const response = await fetch('/api/testimonials', {
@@ -315,41 +318,41 @@ export default function AdminGalleryManager() {
       })
 
       if (!response.ok) {
-        setVideoMessage(await readResponseMessage(response, 'Could not upload this video.'))
+        setTestimonialMessage(await readResponseMessage(response, 'Could not upload this image.'))
         return
       }
 
-      const data = (await response.json()) as { videos?: TestimonialVideo[]; message?: string }
+      const data = (await response.json()) as { images?: TestimonialImage[]; message?: string }
 
-      setVideos(data.videos ?? [])
-      setVideoDescription('')
-      setVideoFile(null)
-      setVideoMessage('Video added to testimonials.')
+      setTestimonialImages(data.images ?? [])
+      setTestimonialDescription('')
+      setTestimonialFile(null)
+      setTestimonialMessage('Image added to testimonial swiper.')
     } catch {
-      setVideoMessage('Could not upload this video. Please try again.')
+      setTestimonialMessage('Could not upload this image. Please try again.')
     } finally {
-      setIsVideoSaving(false)
+      setIsTestimonialSaving(false)
     }
   }
 
-  const removeVideo = async (videoId: string) => {
-    setVideoMessage('Removing video...')
+  const removeTestimonialImage = async (imageId: string) => {
+    setTestimonialMessage('Removing image...')
 
     try {
-      const response = await fetch(`/api/testimonials?id=${encodeURIComponent(videoId)}`, {
+      const response = await fetch(`/api/testimonials?id=${encodeURIComponent(imageId)}`, {
         method: 'DELETE',
       })
-      const data = (await response.json()) as { videos?: TestimonialVideo[]; message?: string }
+      const data = (await response.json()) as { images?: TestimonialImage[]; message?: string }
 
       if (!response.ok) {
-        setVideoMessage(data.message || 'Could not remove this video.')
+        setTestimonialMessage(data.message || 'Could not remove this image.')
         return
       }
 
-      setVideos(data.videos ?? [])
-      setVideoMessage('Video removed from testimonials.')
+      setTestimonialImages(data.images ?? [])
+      setTestimonialMessage('Image removed from testimonial swiper.')
     } catch {
-      setVideoMessage('Could not remove this video. Please try again.')
+      setTestimonialMessage('Could not remove this image. Please try again.')
     }
   }
 
@@ -359,7 +362,7 @@ export default function AdminGalleryManager() {
         <div className="max-w-md mx-auto px-4">
           <div className="bg-card border border-border rounded-lg p-8 shadow-lg">
             <h1 className="text-3xl font-serif font-bold text-foreground mb-2">Admin Login</h1>
-            <p className="text-muted-foreground mb-8">Login to add or remove gallery images and testimonial videos.</p>
+            <p className="text-muted-foreground mb-8">Login to add or remove gallery and testimonial images.</p>
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
@@ -411,7 +414,7 @@ export default function AdminGalleryManager() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
           <div>
             <h1 className="text-4xl font-serif font-bold text-foreground mb-2">Gallery & Testimonial Admin</h1>
-            <p className="text-muted-foreground">Images and videos are saved in public upload folders.</p>
+            <p className="text-muted-foreground">Gallery and testimonial images are saved in public upload folders.</p>
           </div>
           <button
             type="button"
@@ -437,7 +440,7 @@ export default function AdminGalleryManager() {
               <select
                 id="category"
                 value={category}
-                onChange={(event) => setCategory(event.target.value as GalleryCategory)}
+                onChange={(event) => setCategory(event.target.value as VisibleGalleryCategory)}
                 className="w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               >
                 {categoryOptions.map((option) => (
@@ -492,7 +495,7 @@ export default function AdminGalleryManager() {
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <h3 className="font-semibold text-foreground">{image.title}</h3>
-                          <p className="text-sm text-muted-foreground capitalize">{image.category}</p>
+                          <p className="text-sm text-muted-foreground">{getGalleryCategoryLabel(image.category)}</p>
                         </div>
                         <button
                           type="button"
@@ -513,80 +516,80 @@ export default function AdminGalleryManager() {
 
         <div className="mt-12 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-8">
           <form
-            onSubmit={handleVideoUpload}
+            onSubmit={handleTestimonialImageUpload}
             className="bg-card border border-border rounded-lg p-6 shadow-lg h-fit space-y-5"
           >
             <div>
-              <h2 className="text-2xl font-serif font-bold text-foreground mb-2">Add Success Story Reel</h2>
-              <p className="text-sm text-muted-foreground">Upload a vertical MP4, WebM, or MOV video under 300 MB.</p>
+              <h2 className="text-2xl font-serif font-bold text-foreground mb-2">Add Testimonial Image</h2>
+              <p className="text-sm text-muted-foreground">Upload JPG, PNG, or WebP images under 5 MB for the swiper.</p>
             </div>
 
             <div>
-              <label htmlFor="video-description" className="block text-sm font-medium text-foreground mb-2">
-                Description
+              <label htmlFor="testimonial-description" className="block text-sm font-medium text-foreground mb-2">
+                Small Description
               </label>
               <textarea
-                id="video-description"
-                value={videoDescription}
-                onChange={(event) => setVideoDescription(event.target.value)}
+                id="testimonial-description"
+                value={testimonialDescription}
+                onChange={(event) => setTestimonialDescription(event.target.value)}
                 className="min-h-28 w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                placeholder="Short note about this testimonial"
+                placeholder="Short note from the customer"
               />
             </div>
 
             <div>
-              <label htmlFor="testimonial-video" className="block text-sm font-medium text-foreground mb-2">
-                Reel Video
+              <label htmlFor="testimonial-image" className="block text-sm font-medium text-foreground mb-2">
+                Testimonial Image
               </label>
               <input
-                id="testimonial-video"
+                id="testimonial-image"
                 type="file"
-                accept="video/mp4,video/webm,video/quicktime"
-                onChange={(event) => setVideoFile(event.target.files?.[0] ?? null)}
-                key={videoFile ? 'has-video' : 'empty-video'}
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) => setTestimonialFile(event.target.files?.[0] ?? null)}
+                key={testimonialFile ? 'has-testimonial-image' : 'empty-testimonial-image'}
                 className="w-full text-sm text-muted-foreground file:mr-4 file:rounded-lg file:border-0 file:bg-secondary file:px-4 file:py-3 file:text-foreground hover:file:bg-secondary/80"
               />
             </div>
 
-            {videoMessage && <p className="text-sm text-muted-foreground">{videoMessage}</p>}
+            {testimonialMessage && <p className="text-sm text-muted-foreground">{testimonialMessage}</p>}
 
             <button
               type="submit"
-              disabled={isVideoSaving}
+              disabled={isTestimonialSaving}
               className="inline-flex w-full items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-accent transition-colors font-semibold disabled:opacity-70"
             >
-              <Video className="h-5 w-5" />
-              {isVideoSaving ? 'Uploading...' : 'Add Testimonial Video'}
+              <ImagePlus className="h-5 w-5" />
+              {isTestimonialSaving ? 'Uploading...' : 'Add Testimonial Image'}
             </button>
           </form>
 
           <section>
-            <h2 className="text-2xl font-serif font-bold text-foreground mb-5">Success Story Videos</h2>
+            <h2 className="text-2xl font-serif font-bold text-foreground mb-5">Testimonial Swiper Images</h2>
 
-            {videos.length === 0 ? (
+            {testimonialImages.length === 0 ? (
               <div className="bg-card border border-border rounded-lg p-8 text-center">
-                <p className="text-muted-foreground">No Success Story videos yet.</p>
+                <p className="text-muted-foreground">No testimonial images yet.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {videos.map((video) => (
-                  <div key={video.id} className="bg-card border border-border rounded-lg overflow-hidden shadow-lg">
-                    <div className="aspect-[9/16] bg-secondary/30">
-                      <video src={video.src} controls playsInline className="h-full w-full object-cover" />
+                {testimonialImages.map((image) => (
+                  <div key={image.id} className="bg-card border border-border rounded-lg overflow-hidden shadow-lg">
+                    <div className="aspect-[4/5] bg-secondary/30">
+                      <img src={image.src} alt={image.title} className="h-full w-full object-cover" />
                     </div>
                     <div className="p-5">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h3 className="font-semibold text-foreground">{video.title}</h3>
-                          {video.description && (
-                            <p className="mt-1 text-sm text-muted-foreground">{video.description}</p>
+                          <h3 className="font-semibold text-foreground">{image.title}</h3>
+                          {image.description && (
+                            <p className="mt-1 text-sm text-muted-foreground">{image.description}</p>
                           )}
                         </div>
                         <button
                           type="button"
-                          onClick={() => removeVideo(video.id)}
+                          onClick={() => removeTestimonialImage(image.id)}
                           className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive text-white hover:opacity-90 transition-opacity"
-                          aria-label={`Remove ${video.title}`}
+                          aria-label={`Remove ${image.title}`}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

@@ -24,7 +24,7 @@ export default function Navigation() {
           {/* Logo */}
           <Link
             href="/"
-            className="relative w-90 h-90 flex items-center flex-shrink-0 z-10"
+            className="relative w-80 h-80 md:w-90 md:h-90 flex items-start md:items-center flex-shrink-0 z-10"
           >
             <Image
               src="/mkcreation.svg"

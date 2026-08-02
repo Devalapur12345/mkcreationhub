@@ -1,20 +1,33 @@
 export type GalleryCategory =
   | 'bride'
   | 'groom'
-  | 'clothing-fashion'
   | 'gift-hampers'
-  | 'beauty'
   | 'footwear'
+  | 'chocolates-sweet'
+  | 'dry-fruits-fruits'
+  | 'baby-gifts'
+  | 'birthday-gifts'
+  | 'success-stories'
+  | 'clothing-fashion'
+  | 'beauty'
   | 'chocolates'
   | 'sweets'
   | 'dry-fruits'
   | 'fruits'
-  | 'baby-gifts'
-  | 'birthday-gifts'
   | 'videos'
   | 'floral'
   | 'luxury'
   | 'gifts'
+
+export type VisibleGalleryCategory = Exclude<
+  GalleryCategory,
+  'clothing-fashion' | 'beauty' | 'chocolates' | 'sweets' | 'dry-fruits' | 'fruits' | 'videos' | 'floral' | 'luxury' | 'gifts'
+>
+
+export type GalleryFilter = {
+  category: string
+  id: 'all' | VisibleGalleryCategory
+}
 
 export type GalleryImage = {
   id: string
@@ -26,7 +39,7 @@ export type GalleryImage = {
   blobPath?: string
 }
 
-export const galleryFilters = [
+export const galleryFilters: GalleryFilter[] = [
   {
     category: 'All',
     id: 'all',
@@ -40,36 +53,20 @@ export const galleryFilters = [
     id: 'groom',
   },
   {
-    category: 'Clothing & Fashion',
-    id: 'clothing-fashion',
-  },
-  {
     category: 'Gift Hampers',
     id: 'gift-hampers',
-  },
-  {
-    category: 'Beauty & Cosmetics',
-    id: 'beauty',
   },
   {
     category: 'Footwear',
     id: 'footwear',
   },
   {
-    category: 'Chocolates',
-    id: 'chocolates',
+    category: 'Chocolates & Sweet',
+    id: 'chocolates-sweet',
   },
   {
-    category: 'Sweets',
-    id: 'sweets',
-  },
-  {
-    category: 'Dry Fruits',
-    id: 'dry-fruits',
-  },
-  {
-    category: 'Fruits',
-    id: 'fruits',
+    category: 'Dry Fruits & Fruits',
+    id: 'dry-fruits-fruits',
   },
   {
     category: 'Baby Gifts',
@@ -80,14 +77,44 @@ export const galleryFilters = [
     id: 'birthday-gifts',
   },
   {
-    category: 'Videos',
-    id: 'videos',
+    category: 'Success Stories',
+    id: 'success-stories',
   },
 ]
 
 export const uploadableGalleryCategories = galleryFilters
   .map((filter) => filter.id)
-  .filter((id): id is GalleryCategory => id !== 'all' && id !== 'videos')
+  .filter((id): id is VisibleGalleryCategory => id !== 'all')
+
+const normalizedCategoryLabels = Object.fromEntries(
+  galleryFilters
+    .filter((filter): filter is { category: string; id: VisibleGalleryCategory } => filter.id !== 'all')
+    .map((filter) => [filter.id, filter.category]),
+) as Record<VisibleGalleryCategory, string>
+
+export function normalizeGalleryCategory(category: GalleryCategory | string): VisibleGalleryCategory {
+  if (uploadableGalleryCategories.includes(category as VisibleGalleryCategory)) {
+    return category as VisibleGalleryCategory
+  }
+
+  if (category === 'chocolates' || category === 'sweets') {
+    return 'chocolates-sweet'
+  }
+
+  if (category === 'dry-fruits' || category === 'fruits') {
+    return 'dry-fruits-fruits'
+  }
+
+  if (category === 'videos') {
+    return 'success-stories'
+  }
+
+  return 'gift-hampers'
+}
+
+export function getGalleryCategoryLabel(category: GalleryCategory | string) {
+  return normalizedCategoryLabels[normalizeGalleryCategory(category)]
+}
 
 export const galleryStorageKey = 'MK Creation Hub-gallery-images'
 export const adminSessionKey = 'MK Creation Hub-admin-logged-in'
@@ -97,35 +124,35 @@ export const defaultImages: GalleryImage[] = [
     id: 'jarda-decoration',
     src: '/gallery/jarda-decoration.png',
     alt: 'Tiered Jarda sweet decoration',
-    category: 'sweets',
+    category: 'chocolates-sweet',
     title: 'Jarda Decoration',
   },
   {
     id: 'jarda-decoration-with-flowers',
     src: '/gallery/jarda-decoration-with-flowers.png',
     alt: 'Jarda sweet decoration with flowers',
-    category: 'sweets',
+    category: 'chocolates-sweet',
     title: 'Jarda Decoration with Flowers',
   },
   {
     id: 'chocolate-tower',
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-UMsIbcL4YX91sw0OyZ6tspfBzdTr47.png',
     alt: 'Red KitKat chocolate tower with flowers',
-    category: 'chocolates',
+    category: 'chocolates-sweet',
     title: 'Chocolate Tower',
   },
   {
     id: 'dry-fruits-packing',
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-r8bVI2I79YDmStDbSAFPOV8Pl5LU31.png',
     alt: 'Red roses with baby breath flowers',
-    category: 'dry-fruits',
+    category: 'dry-fruits-fruits',
     title: 'Dry Fruits Packing',
   },
   {
     id: 'luxury-chocolate-tower',
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-TPeycms6G9DAlEpXKs7MUXaGBp2mJI.png',
     alt: 'Luxury Ferrero Rocher tower with pink flowers',
-    category: 'chocolates',
+    category: 'chocolates-sweet',
     title: 'Luxury Chocolate Tower',
   },
   {
@@ -139,7 +166,7 @@ export const defaultImages: GalleryImage[] = [
     id: 'premium-fruit-dome',
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-sD2WzqfyXEfnf2Z4FbQ4ZaetpvOccc.png',
     alt: 'Fruit and flower dome arrangement',
-    category: 'fruits',
+    category: 'dry-fruits-fruits',
     title: 'Premium Fruit Dome',
   },
   {
@@ -167,14 +194,14 @@ export const defaultImages: GalleryImage[] = [
     id: 'packing-with-cloth',
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image_2026-07-07_12-22-52-TrP6IDFzOjodpLKdyRYWU3xYXhDs7m.png',
     alt: 'Orange fan decorative arrangements',
-    category: 'clothing-fashion',
+    category: 'gift-hampers',
     title: 'Packing with Cloth',
   },
   {
     id: 'skincare-beauty-box',
     src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image_2026-07-07_12-30-58-jGr7RMWyxdDZiYq1s9QVmju8ihMjOd.png',
     alt: 'Skincare and beauty gift box',
-    category: 'beauty',
+    category: 'gift-hampers',
     title: 'Skincare Beauty Box',
   },
   {

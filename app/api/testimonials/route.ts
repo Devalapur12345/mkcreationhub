@@ -4,24 +4,23 @@ import path from 'path'
 import { get, put, del } from '@vercel/blob'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin-auth'
-import type { TestimonialVideo } from '@/lib/testimonials'
+import type { TestimonialImage } from '@/lib/testimonials'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const uploadsDir = path.join(process.cwd(), 'public', 'testimonials', 'uploads')
-const manifestPath = path.join(uploadsDir, 'videos.json')
+const manifestPath = path.join(uploadsDir, 'images.json')
 const isVercel = process.env.VERCEL === '1' || Boolean(process.env.VERCEL_URL)
-const maxFileSize = 300 * 1024 * 1024
+const maxFileSize = 5 * 1024 * 1024
 
 const allowedTypes = new Map([
-  ['video/mp4', 'mp4'],
-  ['video/webm', 'webm'],
-  ['video/quicktime', 'mov'],
-  ['video/x-m4v', 'mp4'],
+  ['image/jpeg', 'jpg'],
+  ['image/png', 'png'],
+  ['image/webp', 'webp'],
 ])
 
-const allowedExtensions = new Set(['mp4', 'webm', 'mov'])
+const allowedExtensions = new Set(['jpg', 'jpeg', 'png', 'webp'])
 
 async function ensureUploadsDir() {
   if (!isVercel) {
@@ -29,16 +28,16 @@ async function ensureUploadsDir() {
   }
 }
 
-async function readVideos() {
+async function readImages() {
   if (isVercel) {
     try {
-      const blob = await get('testimonials/videos.json', { access: 'private' })
+      const blob = await get('testimonials/images.json', { access: 'private' })
       if (!blob) {
         return []
       }
 
       const text = await new Response(blob.stream).text()
-      return JSON.parse(text) as TestimonialVideo[]
+      return JSON.parse(text) as TestimonialImage[]
     } catch {
       return []
     }
@@ -48,15 +47,15 @@ async function readVideos() {
 
   try {
     const file = await readFile(manifestPath, 'utf8')
-    return JSON.parse(file) as TestimonialVideo[]
+    return JSON.parse(file) as TestimonialImage[]
   } catch {
     return []
   }
 }
 
-async function saveVideos(videos: TestimonialVideo[]) {
+async function saveImages(images: TestimonialImage[]) {
   if (isVercel) {
-    await put('testimonials/videos.json', JSON.stringify(videos, null, 2), {
+    await put('testimonials/images.json', JSON.stringify(images, null, 2), {
       access: 'private',
       contentType: 'application/json',
       allowOverwrite: true,
@@ -65,7 +64,7 @@ async function saveVideos(videos: TestimonialVideo[]) {
   }
 
   await ensureUploadsDir()
-  await writeFile(manifestPath, JSON.stringify(videos, null, 2), 'utf8')
+  await writeFile(manifestPath, JSON.stringify(images, null, 2), 'utf8')
 }
 
 function jsonResponse(body: unknown, init?: ResponseInit) {
@@ -84,7 +83,7 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Unknown server error'
 }
 
-function getVideoExtension(file: File) {
+function getImageExtension(file: File) {
   const extensionFromType = allowedTypes.get(file.type)
 
   if (extensionFromType) {
@@ -101,8 +100,8 @@ function getVideoExtension(file: File) {
 }
 
 export async function GET() {
-  const videos = await readVideos()
-  return jsonResponse({ videos })
+  const images = await readImages()
+  return jsonResponse({ images })
 }
 
 export async function POST(request: NextRequest) {
@@ -114,36 +113,36 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData()
-    const file = formData.get('video')
+    const file = formData.get('image')
     const titleValue = formData.get('title')
     const descriptionValue = formData.get('description')
 
     if (!(file instanceof File)) {
-      return jsonError('Please choose a video.')
+      return jsonError('Please choose an image.')
     }
 
     if (file.size > maxFileSize) {
-      return jsonError('Please choose a video smaller than 300 MB.')
+      return jsonError('Please choose an image smaller than 5 MB.')
     }
 
-    const extension = getVideoExtension(file)
+    const extension = getImageExtension(file)
 
     if (!extension) {
-      return jsonError('Only MP4, WebM, and MOV videos are allowed.')
+      return jsonError('Only JPG, PNG, and WebP images are allowed.')
     }
 
-    const videoTitle = String(titleValue || '').trim() || 'Success Story'
-    const videoDescription = String(descriptionValue || '').trim()
-    const videoId = `testimonial-${Date.now()}-${randomUUID()}`
-    const fileName = `${videoId}.${extension}`
+    const imageTitle = String(titleValue || '').trim() || 'Customer Moment'
+    const imageDescription = String(descriptionValue || '').trim()
+    const imageId = `testimonial-${Date.now()}-${randomUUID()}`
+    const fileName = `${imageId}.${extension === 'jpeg' ? 'jpg' : extension}`
     const bytes = Buffer.from(await file.arrayBuffer())
 
-    const publicSrc = `/api/testimonials/videos/${encodeURIComponent(fileName)}`
+    const publicSrc = `/api/testimonials/images/${encodeURIComponent(fileName)}`
 
     if (isVercel) {
       await put(`testimonials/${fileName}`, bytes, {
         access: 'private',
-        contentType: file.type || `video/${extension}`,
+        contentType: file.type || `image/${extension}`,
         allowOverwrite: true,
       })
     } else {
@@ -151,22 +150,22 @@ export async function POST(request: NextRequest) {
       await writeFile(path.join(uploadsDir, fileName), bytes)
     }
 
-    const uploadedVideo: TestimonialVideo = {
-      id: videoId,
+    const uploadedImage: TestimonialImage = {
+      id: imageId,
       src: publicSrc,
-      title: videoTitle,
-      description: videoDescription,
+      title: imageTitle,
+      description: imageDescription,
       isCustom: true,
     }
 
-    const videos = await readVideos()
-    const nextVideos = [uploadedVideo, ...videos]
-    await saveVideos(nextVideos)
+    const images = await readImages()
+    const nextImages = [uploadedImage, ...images]
+    await saveImages(nextImages)
 
-    return jsonResponse({ video: uploadedVideo, videos: nextVideos }, { status: 201 })
+    return jsonResponse({ image: uploadedImage, images: nextImages }, { status: 201 })
   } catch (error) {
-    console.error('Testimonial upload failed:', error)
-    return jsonError(`Could not upload this video: ${getErrorMessage(error)}`, 500)
+    console.error('Testimonial image upload failed:', error)
+    return jsonError(`Could not upload this image: ${getErrorMessage(error)}`, 500)
   }
 }
 
@@ -177,41 +176,41 @@ export async function DELETE(request: NextRequest) {
     return authError
   }
 
-  const videoId = request.nextUrl.searchParams.get('id')
+  const imageId = request.nextUrl.searchParams.get('id')
 
-  if (!videoId) {
-    return jsonError('Missing video id.')
+  if (!imageId) {
+    return jsonError('Missing image id.')
   }
 
-  const videos = await readVideos()
-  const videoToDelete = videos.find((video) => video.id === videoId)
-  const nextVideos = videos.filter((video) => video.id !== videoId)
+  const images = await readImages()
+  const imageToDelete = images.find((image) => image.id === imageId)
+  const nextImages = images.filter((image) => image.id !== imageId)
 
-  if (videoToDelete?.src.startsWith('/testimonials/uploads/') || videoToDelete?.src.startsWith('/api/testimonials/videos/')) {
-    const fileName = decodeURIComponent(path.basename(videoToDelete.src))
+  if (imageToDelete?.src.startsWith('/testimonials/uploads/') || imageToDelete?.src.startsWith('/api/testimonials/images/')) {
+    const fileName = decodeURIComponent(path.basename(imageToDelete.src))
 
     try {
       if (!isVercel) {
         await unlink(path.join(uploadsDir, fileName))
       }
     } catch {
-      // Keep the manifest correct even if the video file was already removed.
+      // Keep the manifest correct even if the image file was already removed.
     }
   }
 
-  if (isVercel && videoToDelete) {
+  if (isVercel && imageToDelete) {
     try {
-      const fileName = videoToDelete.src.startsWith('/api/testimonials/videos/')
-        ? decodeURIComponent(path.basename(videoToDelete.src))
-        : path.basename(videoToDelete.src)
+      const fileName = imageToDelete.src.startsWith('/api/testimonials/images/')
+        ? decodeURIComponent(path.basename(imageToDelete.src))
+        : path.basename(imageToDelete.src)
 
       await del(`testimonials/${fileName}`)
     } catch {
-      // Keep the manifest correct even if the video file was already removed.
+      // Keep the manifest correct even if the image file was already removed.
     }
   }
 
-  await saveVideos(nextVideos)
+  await saveImages(nextImages)
 
-  return jsonResponse({ videos: nextVideos })
+  return jsonResponse({ images: nextImages })
 }
